@@ -4,6 +4,9 @@ import time
 from pycoingecko import CoinGeckoAPI
 
 class CoinGecko(CoinGeckoAPI):
+    """
+    Ceci est une classe permettant l'accès au données de CoinGecko
+    """
     def __init__(self):
         super().__init__()
 
@@ -39,5 +42,5 @@ class CoinGecko(CoinGeckoAPI):
 
 if __name__ == '__main__':
     db = CoinGecko()
-    df = db.get_marketcap_dataframe(topn=10)
-    print(df)
+    # df = db.get_marketcap_dataframe(topn=10)
+    # print(df)
