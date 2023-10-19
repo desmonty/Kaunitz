@@ -1,4 +1,7 @@
 dash==2.10.2
-pandas==1.4.4
+fastparquet==2023.8.0
+numpy==1.26.0
+pandas==2.1.1
+cytoolz
 pycoingecko
 yahooquery
