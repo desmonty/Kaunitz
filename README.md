@@ -1,7 +1,10 @@
 # Kaunitz
 
-Goal: Extract financial data and create a crypto portfolio
+Goal: Extract financial data and analyze Portfolio Management strategies
 
 
 ## How to
-TODO
+
+```bash
+poetry run python -m app.dashboards.snapsho_daily
+```
