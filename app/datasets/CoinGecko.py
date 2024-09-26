@@ -15,6 +15,8 @@ class CoinGecko:
         self.api = CoinGeckoAPI()
         self.id_to_symbol = None
         self.data_path = 'app/datasets/data_cache'
+        # Generate coins_list
+        self.symbol_to_ids('BTC')
 
     def symbol_to_ids(self, symbol: str) -> set:
         """
@@ -71,6 +73,7 @@ class CoinGecko:
         df.sort_values(by='market_cap', ascending=False, inplace=True)
         df.reset_index(inplace=True, drop=True)
         df['quote'] = quote
+        df['symbol'] = df['id'].apply(lambda x: self.id_to_symbol.get(x))
 
         df.to_parquet(f'{self.data_path}/{filename}.parquet')
         return df
@@ -82,7 +85,7 @@ class CoinGecko:
         days: int=365,
         until: dt.date=dt.date.today()
     ):
-        filename = f"{dt.date.today()}_historical_{quote}_top{topn}"
+        filename = f"{until}_historical_{quote}_top{topn}_last{days}"
         try:
             return pd.read_parquet(f'{self.data_path}/{filename}.parquet')
         except:
@@ -121,7 +124,7 @@ class CoinGecko:
             df = functools.reduce(
                 lambda left, right: pd.merge(
                     left, right,
-                    on = ['timestamp'],
+                    on=['timestamp'],
                     how='outer'
                 ),
                 df
