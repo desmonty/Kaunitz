@@ -11,11 +11,14 @@ def create_bar_chart(
     color: str,
     title: str,
     x_axe_title: str,
-    y_axe_title: str
+    y_axe_title: str,
+    return_fig: bool = False
 ):
     fig = px.bar(data, x=x, y=y, color=color, title=title)
     fig.update_layout(showlegend=False)
     fig.update_xaxes(title=x_axe_title)
     fig.update_yaxes(title=y_axe_title)
     fig.update_layout(margin=dict(t=40, b=40, r=40, l=40))
+    if return_fig:
+        return fig
     return dcc.Graph(figure=fig, id='bar-chart')
