@@ -15,6 +15,7 @@ cytoolz = "^0.12.3"
 pycoingecko = "^3.1.0"
 yahooquery = "^2.3.7"
 polars = "^1.8.2"
+dash-bootstrap-components = "^1.6.0"
 
 
 [build-system]
