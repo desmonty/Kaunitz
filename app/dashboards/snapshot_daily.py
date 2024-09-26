@@ -1,10 +1,11 @@
-import dash
-import pandas as pd
-import plotly.express as px
 import os, sys
-
-from dash import dcc
+import dash
 from dash import html
+import dash_bootstrap_components as dbc
+
+from app.dashboards.utils import draw_figure, draw_text
+from app.dashboards.visualizations.treemap import create_treemap_chart
+from app.dashboards.visualizations.bar import create_bar_chart
 
 # Following lines are for assigning the parent directory dynamically.
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -16,60 +17,71 @@ from datasets.CoinGecko import CoinGecko
 
 # Get data from CoinGecko
 cg = CoinGecko()
-data = cg.get_marketcap_dataframe(topn=100)
+data = cg.get_marketcap_df(topn=100)
 
 # Initialize the Dash app
-app = dash.Dash(__name__)
-
-# Apply custom styles to the app
-app.css.append_css({
-    'external_url': 'https://stackpath.bootstrapcdn.com/bootswatch/4.5.2/slate/bootstrap.min.css'
-})
-
-# Create the treemap chart
-def create_treemap_chart():
-    fig = px.treemap(data, path=['symbol'], values='market_cap')
-    fig.update_traces(textinfo='label+percent entry')
-    fig.update_layout(margin=dict(t=40, b=40, r=40, l=40))
-    return dcc.Graph(figure=fig, id='treemap-chart')
-
-# Create the bar chart for total_volume
-def create_bar_chart():
-    fig = px.bar(data, x='symbol', y='total_volume', color='symbol', title='Total Volume')
-    fig.update_layout(showlegend=False)
-    fig.update_xaxes(title='Symbol')
-    fig.update_yaxes(title='Total Volume')
-    fig.update_layout(margin=dict(t=40, b=40, r=40, l=40))
-    return dcc.Graph(figure=fig, id='bar-chart')
-
-# Define the layout of the app
-app.layout = html.Div(
-    style={'backgroundColor': '#f8f9fa'},
-    children=[
-        html.H1("Market Data Dashboard", style={'textAlign': 'center', 'marginTop': '20px'}),
-        html.Div(
-            className='row',
-            children=[
-                html.Div(
-                    className='six columns',
-                    children=[
-                        html.H3("Treemap Chart", style={'textAlign': 'center'}),
-                        create_treemap_chart()
-                    ],
-                ),
-                html.Div(
-                    className='six columns',
-                    children=[
-                        html.H3("Total Volume Bar Chart", style={'textAlign': 'center'}),
-                        create_bar_chart()
-                    ],
-                ),
-            ],
-            style={'marginTop': '40px'}
-        ),
-    ]
+external_stylesheets = [
+    dbc.themes.SLATE
+    #dbc.themes.CYBORG,
+    #'https://stackpath.bootstrapcdn.com/bootswatch/4.5.2/slate/bootstrap.min.css',
+]
+app = dash.Dash(
+    __name__,
+    external_stylesheets=external_stylesheets
 )
 
-# Run the app
-if __name__ == '__main__':
-    app.run_server(debug=True)
+app.layout = html.Div([
+    dbc.Card(
+        dbc.CardBody([
+            dbc.Row([
+                dbc.Col([
+                    draw_text(
+                        "Market Data Dashboard",
+                        level=1,
+                        additional_style={'marginTop': '20px'}
+                    )
+                ], width=12),
+            ], align='center'), 
+            html.Br(),
+            dbc.Row([   
+                dbc.Col([
+                    draw_text("Market Capitalization", level=3)
+                ], width=12),
+            ], align='center'), 
+            dbc.Row([   
+                dbc.Col([
+                    draw_figure(create_treemap_chart(
+                        data,
+                        path=['symbol'],
+                        values='market_cap',
+                        return_fig=True,
+                    ))
+                ], width=12),
+            ], align='center'),
+            html.Br(),
+            dbc.Row([   
+                dbc.Col([
+                    draw_text("Total Volume", level=3)
+                ], width=12),
+            ], align='center'), 
+            dbc.Row([   
+                dbc.Col([
+                    draw_figure(
+                        create_bar_chart(
+                            data,
+                            x='symbol',
+                            y='total_volume',
+                            color='symbol',
+                            title='Total Volume',
+                            x_axe_title='Symbol',
+                            y_axe_title='Total Volume',
+                            return_fig=True,
+                    ))
+                ], width=12),
+            ], align='center'),
+        ]), color = 'dark'
+    )
+])
+
+# Run app and display result inline in the notebook
+app.run_server()
