@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import time
 import cytoolz
+from typing import List
 from pycoingecko import CoinGeckoAPI
 
 
@@ -83,30 +84,39 @@ class CoinGecko:
         quote: str='usd',
         topn: int=10,
         days: int=365,
-        until: dt.date=dt.date.today()
+        until: dt.date=dt.date.today(),
+        assets_ids: List[str]=None
     ):
-        filename = f"{until}_historical_{quote}_top{topn}_last{days}"
+        if assets_ids:
+            assets_str = '_'.join(assets_ids)
+            filename = f"{until}_historical_{quote}_assets{assets_str}_last{days}"
+        else:
+            filename = f"{until}_historical_{quote}_top{topn}_last{days}"
+
         try:
             return pd.read_parquet(f'{self.data_path}/{filename}.parquet')
         except:
             pass
         
-        # Get symbol of top topn assets by marketcap
-        df_marketcap = self.get_marketcap_df(quote=quote, topn=topn)
-        print(df_marketcap)
-        ids = [
-            (len(set_ids), set_ids.pop())
-            for set_ids in map(self.symbol_to_ids, df_marketcap['id'])
-        ]
-        # Keep only ids that are not ambiguous
-        ids = list(map(lambda x: x[1], filter(lambda x: x[0] == 1, ids)))
-        print(ids)
+        if not assets_ids:
+            # Get symbol of top topn assets by marketcap
+            df_marketcap = self.get_marketcap_df(quote=quote, topn=topn)
+            print(df_marketcap)
+            ids = [
+                (len(set_ids), set_ids.pop())
+                for set_ids in map(self.symbol_to_ids, df_marketcap['id'])
+            ]
+            # Keep only ids that are not ambiguous
+            ids = list(map(lambda x: x[1], filter(lambda x: x[0] == 1, ids)))
+            print(ids)
+        else:
+            ids = assets_ids
 
         dfs = []
         to_date = dt.datetime.now(tz=dt.timezone.utc).timestamp()
         from_date = to_date - 86400 * days
         for i, asset_id in enumerate(ids):
-            time.sleep((i%30/11.940826)**2)
+            time.sleep(((i%30)/11.940826)**1.2)
             records = self.api.get_coin_market_chart_range_by_id(
                 id=asset_id,
                 from_timestamp=from_date,
@@ -130,8 +140,10 @@ class CoinGecko:
                 df
             )
             df['symbol'] = self.id_to_symbol[asset_id]
+            df['asset'] = asset_id
             df['timestamp'] = df['timestamp'].apply(pd.Timestamp, unit='ms')
             dfs.append(df)
+            print(f"Historical data uploaded for {asset_id}: {i+1}/{len(ids)}")
         df = pd.concat(dfs)
         df.reset_index(inplace=True)
         df['quote'] = quote
