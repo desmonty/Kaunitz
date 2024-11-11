@@ -3,6 +3,10 @@ from app.analytics.Strategy import Strategy
 
 
 class Top5MarketCapStrategyRebalanced(Strategy):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.holdings = pd.DataFrame(columns=['asset', 'quantity'])
+
     def selection(self, current_date, historical_data):
         """Select the top 5 assets by market capitalization."""
         current_data = historical_data[historical_data['date'] == current_date]
@@ -22,6 +26,14 @@ class Top5MarketCapStrategyRebalanced(Strategy):
         }
         return weights
 
+    def get_price(self, asset, date):
+        price_row = self.data[
+            (self.data['date'] == date) & (self.data['asset'] == asset)
+        ]
+        if price_row.empty:
+            return None
+        return price_row['prices'].values[0]
+
     def execution(self, current_date, weights):
         """Execute trades based on the calculated weights, performing a classic rebalance."""
         # First, get current holdings
@@ -31,10 +43,10 @@ class Top5MarketCapStrategyRebalanced(Strategy):
         else:
             # Get current prices for current holdings
             holdings_with_prices = self.holdings.copy()
-            holdings_with_prices['price'] = holdings_with_prices['asset'].apply(
+            holdings_with_prices['prices'] = holdings_with_prices['asset'].apply(
                 lambda asset: self.get_price(asset, current_date)
             )
-            holdings_with_prices['value'] = holdings_with_prices['quantity'] * holdings_with_prices['price']
+            holdings_with_prices['value'] = holdings_with_prices['quantity'] * holdings_with_prices['prices']
             current_holdings = holdings_with_prices[['asset', 'quantity', 'value']]
 
         # Calculate total portfolio value (including new investment)
@@ -54,7 +66,7 @@ class Top5MarketCapStrategyRebalanced(Strategy):
                 'date': current_date,
                 'asset': asset,
                 'quantity': -quantity,  # Negative quantity indicates selling
-                'price': price
+                'prices': price
             })
             # Add value to cash (already included in total_portfolio_value)
             # Assume transaction cost of 0.1%
@@ -79,7 +91,7 @@ class Top5MarketCapStrategyRebalanced(Strategy):
                     'date': current_date,
                     'asset': asset,
                     'quantity': delta_quantity,
-                    'price': price
+                    'prices': price
                 })
                 trade_value = abs(delta_quantity * price)
                 # Assume transaction cost of 0.1%
@@ -107,3 +119,21 @@ class Top5MarketCapStrategyRebalanced(Strategy):
 
         # Update portfolio value
         self._update_portfolio_value(current_date)
+
+    def _update_portfolio_value(self, current_date):
+        """Update the portfolio value."""
+        if self.holdings.empty:
+            total_value = 0
+        else:
+            holdings = self.holdings.copy()
+            holdings['prices'] = holdings['asset'].apply(
+                lambda asset: self.get_price(asset, current_date)
+            )
+            holdings['value'] = holdings['quantity'] * holdings['prices']
+            total_value = holdings['value'].sum()
+
+        new_row = pd.DataFrame([{
+            'date': current_date,
+            'portfolio_value': total_value
+        }])
+        self.portfolio_value_history = pd.concat([self.portfolio_value_history, new_row], ignore_index=True)
