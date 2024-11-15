@@ -1,6 +1,6 @@
 import pandas as pd
 
-from app.analytics.Top5MarketCapStrategy import Top5MarketCapStrategy
+from app.analytics.Top5MarketCapStrategyAccumulated import Top5MarketCapStrategyAccumulated
 from app.analytics.Top5MarketCapStrategyRebalanced import Top5MarketCapStrategyRebalanced
 
 
@@ -24,7 +24,7 @@ if __name__ == "__main__":
     rebalance_cron = "0 0 2 * *"
 
     # Instantiate the strategy
-    strategy_acc = Top5MarketCapStrategy(
+    strategy_acc = Top5MarketCapStrategyAccumulated(
         data=data, rebalance_cron=rebalance_cron, investment_amount=400
     )
 
@@ -34,12 +34,12 @@ if __name__ == "__main__":
 
     # Run backtest
     results_acc = strategy_acc.backtest()
-    results_reb = strategy_reb.backtest()
+    #results_reb = strategy_reb.backtest()
 
     # Output results
-    print("PnL:", results["pnl"])
-    print("Transaction Costs:", results["transaction_costs"])
+    print("PnL:", results_acc["pnl"])
+    print("Transaction Costs:", results_acc["transaction_costs"])
     print("Portfolio Value History:")
-    print(results["portfolio_value_history"])
+    print(results_acc["portfolio_value_history"])
     print("Trades Executed:")
-    print(pd.DataFrame(results["trades"]))
+    print(pd.DataFrame(results_acc["trades"]))

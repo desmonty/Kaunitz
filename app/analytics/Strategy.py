@@ -4,6 +4,8 @@ import datetime as dt
 import logging
 from croniter import croniter
 
+from app.analytics.Holdings import Holdings
+
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
@@ -19,6 +21,7 @@ class Strategy(ABC):
         self.transaction_costs = 0
         self.pnl = 0
         self.portfolio_value_history = pd.DataFrame(columns=['date', 'portfolio_value'])
+        self.holdings = Holdings()
 
     def _generate_rebalance_dates(self):
         """Generate rebalancing dates based on the cron expression."""
@@ -64,37 +67,23 @@ class Strategy(ABC):
         """Calculate weights for each selected asset."""
         pass
 
+    @abstractmethod
     def execution(self, current_date, weights):
         """Execute trades based on the calculated weights."""
-        trades = []
-        transaction_cost = 0
-        for asset, weight in weights.items():
-            price_row = self.data[
-                (self.data['date'] == current_date) & (self.data['asset'] == asset)
-            ]
-            if price_row.empty:
-                continue
-            price = price_row['prices'].values[0]
-            investment = self.investment_amount * weight
-            quantity = investment / price
-            trades.append({
-                'date': current_date,
-                'asset': asset,
-                'quantity': quantity,
-                'price': price
-            })
-            # Assume transaction cost of 0.1%
-            transaction_cost += investment * 0.001
-        self.trades.extend(trades)
-        self.transaction_costs += transaction_cost
-        self._update_portfolio_value(current_date)
+        pass
 
     def _update_portfolio_value(self, current_date):
         """Update the portfolio value."""
-        holdings = pd.DataFrame(self.trades)
-        holdings = holdings.groupby('asset').agg({'quantity': 'sum'}).reset_index()
+        holdings = self.holdings.state()
+        holdings["date"] = current_date
+        holdings_with_prices = pd.merge(
+            holdings,
+            self.data[['date', 'asset', 'prices']],
+            on=["date", "asset"],
+            how="left"
+        )
         total_value = 0
-        for _, row in holdings.iterrows():
+        for _, row in holdings_with_prices.iterrows():
             asset = row['asset']
             quantity = row['quantity']
             price_row = self.data[

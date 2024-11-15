@@ -6,8 +6,7 @@ import dash_bootstrap_components as dbc
 import pandas as pd
 import plotly.express as px
 
-# Import your strategies
-from app.analytics.Top5MarketCapStrategy import Top5MarketCapStrategy
+from app.analytics.Top5MarketCapStrategyAccumulated import Top5MarketCapStrategyAccumulated
 from app.analytics.Top5MarketCapStrategyRebalanced import Top5MarketCapStrategyRebalanced
 
 # Adjust the system path to include your app directory
