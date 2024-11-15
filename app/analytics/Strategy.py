@@ -56,6 +56,8 @@ class Strategy(ABC):
         selected_assets = self.selection(current_date, historical_data)
         weights = self.weighting(selected_assets, current_date, historical_data)
         self.execution(current_date, weights)
+        self._update_portfolio_value(current_date)
+
 
     @abstractmethod
     def selection(self, current_date, historical_data):
@@ -72,16 +74,20 @@ class Strategy(ABC):
         """Execute trades based on the calculated weights."""
         pass
 
-    def _update_portfolio_value(self, current_date):
-        """Update the portfolio value."""
+    def get_priced_holdings(self, date):
         holdings = self.holdings.state()
-        holdings["date"] = current_date
+        holdings["date"] = date
         holdings_with_prices = pd.merge(
             holdings,
             self.data[['date', 'asset', 'prices']],
             on=["date", "asset"],
             how="left"
         )
+        return holdings_with_prices
+
+    def _update_portfolio_value(self, current_date):
+        """Update the portfolio value."""
+        holdings_with_prices = self.get_priced_holdings(current_date)
         total_value = 0
         for _, row in holdings_with_prices.iterrows():
             asset = row['asset']

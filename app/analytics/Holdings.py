@@ -33,3 +33,9 @@ class Holdings:
     
     def state(self):
         return self._holdings.copy()
+
+    def is_empty(self):
+        return self._holdings.empty
+
+    def overwrite(self, df: pd.DataFrame):
+        self._holdings = df.copy()

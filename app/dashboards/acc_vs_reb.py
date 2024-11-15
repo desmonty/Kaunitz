@@ -6,8 +6,8 @@ import dash_bootstrap_components as dbc
 import pandas as pd
 import plotly.express as px
 
-from app.analytics.Top5MarketCapStrategyAccumulated import Top5MarketCapStrategyAccumulated
-from app.analytics.Top5MarketCapStrategyRebalanced import Top5MarketCapStrategyRebalanced
+from app.analytics.TopMarketCapStrategyAccumulated import Top5MarketCapStrategyAccumulated
+from app.analytics.TopMarketCapStrategyRebalanced import Top5MarketCapStrategyRebalanced
 
 # Adjust the system path to include your app directory
 dir_path = os.path.dirname(os.path.realpath(__file__))

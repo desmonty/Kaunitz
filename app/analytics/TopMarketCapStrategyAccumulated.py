@@ -1,11 +1,15 @@
 from app.analytics.Strategy import Strategy
 
 
-class Top5MarketCapStrategyAccumulated(Strategy):
+class TopMarketCapStrategyAccumulated(Strategy):
+    def __init__(self, data, rebalance_cron, investment_amount, N):
+        super().__init__(data, rebalance_cron, investment_amount)
+        self.N = N
+
     def selection(self, current_date, historical_data):
-        """Select the top 5 assets by market capitalization."""
+        """Select the top N assets by market capitalization."""
         current_data = historical_data[historical_data['date'] == current_date]
-        top_assets = current_data.nlargest(5, 'market_caps')['asset'].tolist()
+        top_assets = current_data.nlargest(self.N, 'market_caps')['asset'].tolist()
         return top_assets
 
     def weighting(self, selected_assets, current_date, historical_data):
@@ -45,4 +49,3 @@ class Top5MarketCapStrategyAccumulated(Strategy):
             transaction_cost += investment * 0.001
         self.trades.extend(trades)
         self.transaction_costs += transaction_cost
-        self._update_portfolio_value(current_date)
